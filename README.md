@@ -106,7 +106,8 @@ NEXT_PUBLIC_AZURE_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 |----------|-------------|
 | [docs/SETUP.md](docs/SETUP.md) | Local development setup, project structure, troubleshooting |
 | [docs/APP_REGISTRATION.md](docs/APP_REGISTRATION.md) | Create App Registration, configure API permissions and RBAC |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Build and deploy to Azure App Service |
+| [docs/AZURE_WEB_APP_SETUP.md](docs/AZURE_WEB_APP_SETUP.md) | Create and configure an Azure Web App via the Portal |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Build, package, and deploy to Azure App Service |
 
 ---
 
