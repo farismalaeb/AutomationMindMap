@@ -20,6 +20,8 @@ It helps Systems Engineers and Automation Architects answer questions like:
 - *Are there hardcoded secrets or deprecated RunAs accounts in my scripts?*
 - *What external systems does this runbook call — VMs, storage, databases, email?*
 
+Wordpress article with images and step by step [Azure Automation Mindmap](https://www.powershellcenter.com/2026/04/18/automation-account-mindmap/)
+
 ---
 
 ## Features
