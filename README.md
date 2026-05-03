@@ -12,6 +12,8 @@
 
 ## What is this?
 
+**Update 3 May 2026**: Added a dashboard summary for all the runbooks in an Automation account, still basic, but will add more later on
+
 Azure Automation MindMap connects to your Azure tenant using your own credentials (MSAL / Azure Entra ID) and renders your **Automation Account** as a live interactive graph — no service principal, no stored secrets.
 
 It helps Systems Engineers and Automation Architects answer questions like:
@@ -31,8 +33,8 @@ Wordpress article with images and step by step [Azure Automation Mindmap](https:
 | 🗺 **Runbooks View** | Dependency tree — each runbook and all its linked assets |
 | 📦 **Objects View** | Asset-centric — see which runbooks consume each variable/credential/connection |
 | 📋 **Table View** | Sortable list with expandable detail cards |
-| � **Summary View** | Account-level health overview — donut chart per runbook (last 30 runs, success/fail), certificate expiry sidebar, click-through to runbook detail |
-| �📜 **Job History** | Latest 10 jobs per runbook, load-more, pre-loaded error/warning status |
+| **Summary View** | Account-level health overview — donut chart per runbook (last 30 runs, success/fail), certificate expiry sidebar, click-through to runbook detail |
+| 📜 **Job History** | Latest 10 jobs per runbook, load-more, pre-loaded error/warning status |
 | 🔴 **Security Scanner** | Detects hardcoded secrets, deprecated RunAs accounts |
 | 📡 **Dependency Parsing** | HTTP requests, VM usage, child runbook calls, storage, SQL, email |
 | 🔒 **100% Read-only** | Every API call is a GET — nothing is ever written or deleted |
