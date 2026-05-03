@@ -855,6 +855,32 @@ export const extractHardcodedSecrets = (scriptContent: string): HardcodedSecret[
         }
     }
 
+    // Match: ConvertTo-SecureString "literal" -AsPlainText [-Force]
+    // Also:  ConvertTo-SecureString $var -AsPlainText [-Force]  (resolves $var via script variables)
+    // The presence of -AsPlainText always means a plaintext secret is embedded in the script.
+    const scriptVars = extractScriptVariables(cleanedContent);
+    const secureStringRegex = /(?:\$([A-Za-z_][A-Za-z0-9_]*)\s*=\s*)?ConvertTo-SecureString\s+(["']([^"'\r\n]{1,})["']|\$[A-Za-z_][A-Za-z0-9_]*)[^|\n;]*-AsPlainText/gi;
+    while ((m = secureStringRegex.exec(cleanedContent)) !== null) {
+        const varName  = m[1] || "SecureString";
+        const rawValue = m[2];                          // either "literal" or $varRef
+        let   value: string;
+        if (rawValue.startsWith("$")) {
+            // resolve $varRef → literal via script variable map
+            const resolved = resolveVariable(rawValue, scriptVars);
+            if (!resolved || resolved.startsWith("$")) continue; // runtime value, skip
+            value = resolved;
+        } else {
+            // strip surrounding quotes
+            value = rawValue.replace(/^["']|["']$/g, "");
+        }
+        if (value.length < 1) continue;
+        const key = `$${varName}`.toLowerCase();
+        if (!secrets.some(s => s.variableName.toLowerCase() === key)) {
+            const masked = value.length > 4 ? value.substring(0, 2) + "****" : "****";
+            secrets.push({ variableName: `$${varName}`, value: masked });
+        }
+    }
+
     return secrets;
 };
 

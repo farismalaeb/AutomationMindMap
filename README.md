@@ -2,7 +2,7 @@
 
 > **An interactive visual explorer for Azure Automation Accounts** — runbooks, assets, job history, and dependencies — powered by your own Azure credentials.
 
-![Views](https://img.shields.io/badge/views-Runbooks%20%7C%20Objects%20%7C%20Table-blue)
+![Views](https://img.shields.io/badge/views-Runbooks%20%7C%20Objects%20%7C%20Table%20%7C%20Summary-blue)
 ![Auth](https://img.shields.io/badge/auth-MSAL%20%2F%20Azure%20Entra%20ID-0078d4)
 ![Read-only](https://img.shields.io/badge/operations-100%25%20read--only-brightgreen)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
@@ -31,7 +31,8 @@ Wordpress article with images and step by step [Azure Automation Mindmap](https:
 | 🗺 **Runbooks View** | Dependency tree — each runbook and all its linked assets |
 | 📦 **Objects View** | Asset-centric — see which runbooks consume each variable/credential/connection |
 | 📋 **Table View** | Sortable list with expandable detail cards |
-| 📜 **Job History** | Latest 10 jobs per runbook, load-more, pre-loaded error/warning status |
+| � **Summary View** | Account-level health overview — donut chart per runbook (last 30 runs, success/fail), certificate expiry sidebar, click-through to runbook detail |
+| �📜 **Job History** | Latest 10 jobs per runbook, load-more, pre-loaded error/warning status |
 | 🔴 **Security Scanner** | Detects hardcoded secrets, deprecated RunAs accounts |
 | 📡 **Dependency Parsing** | HTTP requests, VM usage, child runbook calls, storage, SQL, email |
 | 🔒 **100% Read-only** | Every API call is a GET — nothing is ever written or deleted |
@@ -122,6 +123,7 @@ NEXT_PUBLIC_AZURE_TENANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 │   │   ├── auth/                   # MSAL login/logout
 │   │   └── mindmap/                # All UI components
 │   │       ├── MindMapDashboard    # Main layout + view switching
+│   │       ├── AccountSummary      # Account-level summary donuts + cert sidebar
 │   │       ├── MindMap             # React Flow canvas
 │   │       ├── NodeDetailPanel     # Right-panel detail view
 │   │       ├── TableView           # Table view

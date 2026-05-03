@@ -420,9 +420,10 @@ async function fetchHybridWorkerGroups(token: string, accountId: string): Promis
 export const fetchAllAutomationData = async (token: string, account: AutomationAccount): Promise<AutomationData> => {
     const API_VERSION = "2023-11-01";
 
+    // Phase 1: fetch all non-job resources + the runbook list in parallel
     const [
         rawRunbooks, variables, credentials, connections, certificates,
-        schedules, jobSchedules, jobs, hybridWorkerGroups, sourceControls,
+        schedules, jobSchedules, hybridWorkerGroups, sourceControls,
     ] = await Promise.all([
         fetchAutomationSubResource(token, account.id, "runbooks",       API_VERSION),
         fetchAutomationSubResource(token, account.id, "variables",      API_VERSION),
@@ -431,14 +432,19 @@ export const fetchAllAutomationData = async (token: string, account: AutomationA
         fetchAutomationSubResource(token, account.id, "certificates",   API_VERSION),
         fetchAutomationSubResource(token, account.id, "schedules",      API_VERSION),
         fetchAutomationSubResource(token, account.id, "jobSchedules",   API_VERSION),
-        fetchAutomationSubResource(token, account.id, "jobs",           API_VERSION),
         fetchHybridWorkerGroups(token, account.id),
         fetchAutomationSubResource(token, account.id, "sourceControls", API_VERSION),
     ]);
 
     const client = getArmClient(token);
-    const runbooksWithScripts = await Promise.all(
-        rawRunbooks.map(async (runbook: AutomationResource) => {
+
+    // Phase 2: fetch scripts AND per-runbook jobs in parallel.
+    // Using per-runbook filtered job requests ensures every runbook gets its own
+    // complete job history regardless of how many other runbooks exist.
+    // The global unfiltered endpoint only returns 100 jobs total (one page) which
+    // is insufficient for accounts with many runbooks.
+    const [runbooksWithScripts, jobArrays] = await Promise.all([
+        Promise.all(rawRunbooks.map(async (runbook: AutomationResource) => {
             try {
                 let scriptBody = "";
                 try {
@@ -469,8 +475,21 @@ export const fetchAllAutomationData = async (token: string, account: AutomationA
                 console.error(`Failed to fetch script for runbook ${runbook.name}`, error);
                 return runbook;
             }
-        })
-    );
+        })),
+        // Fetch jobs filtered per runbook so every runbook gets its own history
+        Promise.all(rawRunbooks.map(async (rb: AutomationResource) => {
+            try {
+                const r = await client.get(
+                    `${account.id}/jobs?api-version=${API_VERSION}&$filter=properties/runbook/name eq '${encodeURIComponent(rb.name)}'`
+                );
+                return (r.data.value || []) as AutomationJob[];
+            } catch {
+                return [] as AutomationJob[];
+            }
+        })),
+    ]);
+
+    const jobs: AutomationJob[] = (jobArrays as AutomationJob[][]).flat();
 
     // Build last run map with stream checks for completed jobs
     const { lastRunMap: lastRunByRunbook, jobStreamErrors } = await buildLastRunMap(jobs, client, account.id);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMsal } from "@azure/msal-react";
-import { LogOut, Map, Loader2, ChevronDown, Table2, Boxes, Focus } from "lucide-react";
+import { LogOut, Map, Loader2, ChevronDown, Table2, Boxes, Focus, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import {
     fetchSubscriptions,
@@ -16,8 +16,9 @@ import {
 } from "@/services/azureService";
 import { MindMap } from "./MindMap";
 import { TableView } from "./TableView";
+import { AccountSummary } from "./AccountSummary";
 
-type ViewMode = "mindmap" | "objectmap" | "table";
+type ViewMode = "mindmap" | "objectmap" | "table" | "summary";
 
 export function MindMapDashboard() {
     const { instance, accounts } = useMsal();
@@ -138,29 +139,43 @@ export function MindMapDashboard() {
         loadAccounts();
     }, [selectedSub]);
 
-    // When Account checks: Fetch deep graph data
+    // ── Callback: Load all data for an account (reusable for refresh) ─────────
+    const loadAccountData = useCallback(async (accountId: string) => {
+        if (!accountId) {
+            setAutomationData(null);
+            return;
+        }
+        try {
+            setLoading(true);
+            setError(null);
+            const token = await getToken();
+            const accObj = autoAccounts.find(a => a.id === accountId);
+            if (accObj) {
+                const data = await fetchAllAutomationData(token, accObj);
+                setAutomationData(data);
+            }
+        } catch (err: any) {
+            setError(err.message || "Failed to load runbooks and variables");
+        } finally {
+            setLoading(false);
+        }
+    }, [autoAccounts, accounts, instance]);
+
+    // When Account changes: Fetch deep graph data
     useEffect(() => {
-        const loadData = async () => {
-            if (!selectedAccount) {
-                setAutomationData(null);
-                return;
-            }
-            try {
-                setLoading(true);
-                const token = await getToken();
-                const accObj = autoAccounts.find(a => a.id === selectedAccount);
-                if (accObj) {
-                    const data = await fetchAllAutomationData(token, accObj);
-                    setAutomationData(data);
-                }
-            } catch (err: any) {
-                setError(err.message || "Failed to load runbooks and variables");
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadData();
+        loadAccountData(selectedAccount);
     }, [selectedAccount, autoAccounts]);
+
+    // ── Callback: Refresh all data for current account ───────────────────────
+    const handleRefreshAll = useCallback(() => {
+        loadAccountData(selectedAccount);
+    }, [selectedAccount, loadAccountData]);
+
+    // ── Callback: Navigate to a runbook in single-runbook mindmap view ────────
+    const handleNavigateToRunbook = useCallback((runbookId: string) => {
+        setSelectedRunbookIdMindmap(runbookId);
+        setViewMode("mindmap");
+    }, []);
 
     const handleLogout = () => {
         instance.logoutRedirect().catch(console.error);
@@ -248,6 +263,18 @@ export function MindMapDashboard() {
                         >
                             <Table2 className="w-4 h-4" />
                             <span className="hidden sm:inline">Table</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode("summary")}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                viewMode === "summary"
+                                    ? "bg-white text-indigo-600 shadow-sm"
+                                    : "text-slate-600 hover:text-slate-800"
+                            }`}
+                            title="Account summary: runbook health donuts + certificate expiry"
+                        >
+                            <LayoutDashboard className="w-4 h-4" />
+                            <span className="hidden sm:inline">Summary</span>
                         </button>
                     </div>
 
@@ -361,6 +388,13 @@ export function MindMapDashboard() {
                             viewType="object"
                             onRefreshRunbook={handleRefreshRunbook}
                             onFetchJobStreams={handleFetchJobStreams}
+                        />
+                    ) : viewMode === "summary" ? (
+                        <AccountSummary
+                            data={automationData}
+                            loading={loading}
+                            onRefresh={handleRefreshAll}
+                            onNavigateToRunbook={handleNavigateToRunbook}
                         />
                     ) : (
                         <TableView 
